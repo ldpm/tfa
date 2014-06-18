@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Leadership Programs feature.
+ */
+
+include_once 'leadership_programs.features.inc';
