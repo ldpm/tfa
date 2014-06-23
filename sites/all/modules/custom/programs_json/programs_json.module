@@ -62,6 +62,9 @@ function programs_json_settings()
   return system_settings_form($form);
 }
 
+/**
+ * @throws Exception
+ */
 function programs_json_getPrograms()
 {
   $options = array(
@@ -92,11 +95,11 @@ function programs_json_getPrograms()
       ->propertyCondition('name', $prog->node->program_type)
       ->propertyCondition('vid', 1)
       ->execute();
-    $count = $query->count()->execute();
 
-    if ($count > 0) {
+    if (!empty($result['taxonomy_term'])) {
       $node->field_program_type['und'][0]['tid'] = array_shift($result['taxonomy_term'])->tid;
     } else {
+      $node->field_program_type['und'][0]['tid'] = 1;
       watchdog('programs', 'Error: No program type found for %error.  Original Value: %original',
         array('%error' => $prog->node->title,
           '%original' => $prog->node->program_type)

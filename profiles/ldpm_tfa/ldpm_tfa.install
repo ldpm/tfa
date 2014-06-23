@@ -16,6 +16,10 @@ function ldpm_tfa_install()
 function ldpm_tfa_install_tasks()
 {
   $tasks = array();
+  $tasks['ldpm_tfa_insert_terms'] = array(
+    "display_name" => st("Initialize Vocabulary"),
+    'display' => TRUE,
+  );
   $tasks['ldpm_tfa_set_json_endpoint_form'] = array(
     "display_name" => st('Set Default JSON endpoint for Programs'),
     'display' => TRUE,
@@ -58,11 +62,46 @@ function ldpm_tfa_set_json_endpoint_form()
   return $form;
 }
 
+/**
+ * Callback for the installation task
+ */
+function ldpm_tfa_insert_terms() {
+  $term = new stdClass;
+  $term->vid = 1;
+  $term->vocabulary_machine_name='program_type';
+  $term->name = "End-to-End Program";
+  taxonomy_term_save($term);
+
+  $term2 = new stdClass;
+  $term2->vid = 1;
+  $term2->vocabulary_machine_name='program_type';
+  $term2->name = "Public school-charter";
+  taxonomy_term_save($term2);
+
+  $term3 = new stdClass;
+  $term3->vid = 1;
+  $term3->vocabulary_machine_name='program_type';
+  $term3->name = "Graduate program";
+  taxonomy_term_save($term3);
+
+  $term4 = new stdClass;
+  $term4->vid = 1;
+  $term4->vocabulary_machine_name='program_type';
+  $term4->name = "Certification Only";
+  taxonomy_term_save($term4);
+}
+
+/**
+ * Callback for the installation task
+ */
 function ldpm_tfa_setFrontPage()
 {
   variable_set('site_frontpage', 'programs');
 }
 
+/**
+ * Submit function for the form hook
+ */
 function ldpm_tfa_set_json_endpoint_form_submit(&$form, &$form_state)
 {
   variable_set('programs_json_endpoint', $form_state['values']['endpoint']);
