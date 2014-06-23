@@ -68,7 +68,7 @@ function programs_json_getPrograms()
     'method' => 'GET',
     'timeout' => '120',
   );
-  $result = drupal_http_request('http://www.onedayallkids.org/api/programs/json', $options); //variable_get('programs_json_endpoint'));
+  $result = drupal_http_request(variable_get('programs_json_endpoint'), $options); //variable_get('programs_json_endpoint'));
   if ($result->code != "200") {
     throw new Exception('getPrograms - ' . $result->error);
   }
