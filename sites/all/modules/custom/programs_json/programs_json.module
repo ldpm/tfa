@@ -1,0 +1,108 @@
+<?php
+/**
+ * Created by JetBrains PhpStorm.
+ * User: ldpm
+ * Date: 6/23/14
+ * Time: 12:53 AM
+ * To change this template use File | Settings | File Templates.
+ */
+
+/**
+ * Implements hook_permission.
+ *
+ * @return array
+ *  The array containing new permissions.
+ */
+function programs_json_permission()
+{
+  $perm = array();
+  $perm['administer Programs JSON Integration'] = array(
+    'title' => t('Administer Programs Integration'),
+    'description' => t('Alter configuration for Leadership Programs Integration'),
+    'restrict access' => TRUE,
+  );
+  return $perm;
+}
+
+/**
+ * Implements hook_menu.
+ * @return array
+ *   The array containing the list of pages to add.  In the case, just the
+ *   settings page.
+ */
+function programs_json_menu()
+{
+  $items = array();
+  $items['admin/config/services/programs'] = array(
+    'title' => t('Leadership Programs JSON Integration'),
+    'access arguments' => array('administer Programs Integration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('programs_json_settings'),
+  );
+  return $items;
+}
+
+/**
+ * Creates the data structure for the settings page.
+ * @return mixed
+ */
+function programs_json_settings()
+{
+  $form['programs_json_endpoint'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Endpoint URL for Programs',
+    '#description' => t("This endpoint is used to access PROGRAMS from the JSON feed"),
+    '#default_value' => variable_get('programs_json_endpoint'),
+  );
+  $form['programs_json_sync_tlds_button'] = array(
+    '#type' => 'submit',
+    '#value' => 'Replace programs with the ones from the feed',
+    '#submit' => array('programs_json_getPrograms'),
+  );
+  return system_settings_form($form);
+}
+
+function programs_json_getPrograms()
+{
+  $options = array(
+    'method' => 'GET',
+    'timeout' => '120',
+  );
+  $result = drupal_http_request('http://www.onedayallkids.org/api/programs/json', $options); //variable_get('programs_json_endpoint'));
+  if ($result->code != "200") {
+    throw new Exception('getPrograms - ' . $result->error);
+  }
+  if ($result->status_message != "OK") {
+    throw new Exception('getPrograms - ' . $result->status_message);
+  }
+  $programs = json_decode($result->data);
+  //dsm($programs);
+
+  foreach ($programs->nodes as $prog) {
+    $node = new stdClass;
+    $node->title = $prog->node->title;
+    $node->type = "programs";
+    $node->field_region['und'][0]['value'] = $prog->node->program_region;
+    $node->field_website['und'][0]['url'] = $prog->node->program_website;
+
+    // EntityFieldQuery to grab the tid for the program type
+    $query = new EntityFieldQuery();
+    $result = $query
+      ->entityCondition('entity_type', 'taxonomy_term')
+      ->propertyCondition('name', $prog->node->program_type)
+      ->propertyCondition('vid', 1)
+      ->execute();
+    $count = $query->count()->execute();
+
+    if ($count > 0) {
+      $node->field_program_type['und'][0]['tid'] = array_shift($result['taxonomy_term'])->tid;
+    } else {
+      watchdog('programs', 'Error: No program type found for %error.  Original Value: %original',
+        array('%error' => $prog->node->title,
+          '%original' => $prog->node->program_type)
+      );
+    }
+    node_save($node);
+  }
+  //return count($programs);
+}

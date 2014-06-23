@@ -1,0 +1,5 @@
+name = Programs JSON
+core = 7.x
+package = TFA
+version = 7.x-1.0-rc2
+dependencies[] = leadership_programs
