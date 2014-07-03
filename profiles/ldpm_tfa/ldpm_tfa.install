@@ -4,8 +4,7 @@
  *
  * Perform actions to set up the site for this profile.
  */
-function ldpm_tfa_install()
-{
+function ldpm_tfa_install() {
   include_once DRUPAL_ROOT . '/profiles/standard/standard.install';
   standard_install();
 }
@@ -13,11 +12,14 @@ function ldpm_tfa_install()
 /**
  * Implements hook_install_tasks.
  */
-function ldpm_tfa_install_tasks()
-{
+function ldpm_tfa_install_tasks() {
   $tasks = array();
   $tasks['ldpm_tfa_insert_terms'] = array(
     "display_name" => st("Initialize Vocabulary"),
+    'display' => TRUE,
+  );
+  $tasks['ldpm_tfa_defaultImage'] = array(
+    'display_name' => st("Add default logo to programs"),
     'display' => TRUE,
   );
   $tasks['ldpm_tfa_set_json_endpoint_form'] = array(
@@ -37,14 +39,17 @@ function ldpm_tfa_install_tasks()
     "display_name" => st("Set Default Front Page"),
     'display' => TRUE,
   );
+  $tasks['ldpm_tfa_setTheme'] = array(
+    'display_name' => st("Set Default Theme"),
+    'display' => TRUE,
+  );
   return $tasks;
 }
 
 /**
  * Callback for the installation task
  */
-function ldpm_tfa_set_json_endpoint_form()
-{
+function ldpm_tfa_set_json_endpoint_form() {
   include_once DRUPAL_ROOT . '/includes/iso.inc';
 
   drupal_set_title(st('Set Programs JSON endpoint'));
@@ -68,25 +73,25 @@ function ldpm_tfa_set_json_endpoint_form()
 function ldpm_tfa_insert_terms() {
   $term = new stdClass;
   $term->vid = 1;
-  $term->vocabulary_machine_name='program_type';
+  $term->vocabulary_machine_name = 'program_type';
   $term->name = "End-to-End Program";
   taxonomy_term_save($term);
 
   $term2 = new stdClass;
   $term2->vid = 1;
-  $term2->vocabulary_machine_name='program_type';
+  $term2->vocabulary_machine_name = 'program_type';
   $term2->name = "Public school-charter";
   taxonomy_term_save($term2);
 
   $term3 = new stdClass;
   $term3->vid = 1;
-  $term3->vocabulary_machine_name='program_type';
+  $term3->vocabulary_machine_name = 'program_type';
   $term3->name = "Graduate program";
   taxonomy_term_save($term3);
 
   $term4 = new stdClass;
   $term4->vid = 1;
-  $term4->vocabulary_machine_name='program_type';
+  $term4->vocabulary_machine_name = 'program_type';
   $term4->name = "Certification Only";
   taxonomy_term_save($term4);
 }
@@ -94,15 +99,47 @@ function ldpm_tfa_insert_terms() {
 /**
  * Callback for the installation task
  */
-function ldpm_tfa_setFrontPage()
-{
+function ldpm_tfa_setFrontPage() {
   variable_set('site_frontpage', 'programs');
+}
+
+/**
+ * Callback for the default image
+ */
+function ldpm_tfa_defaultImage() {
+  db_insert('file_managed')
+    ->fields(array(
+      'fid' => 1,
+      'uid' => 1,
+      'filename' => 'program_default.png',
+      'uri' => 'public://default_images/program_default_1.png',
+      'filemime' => 'image/png',
+      'filesize' => '18193',
+      'status' => 0
+    ))
+    ->execute();
+}
+
+/**
+ * Callback for the set theme function
+ */
+function ldpm_tfa_setTheme() {
+  $enable = array(
+    'theme_default' => 'bartik_tfa',
+    'admin_theme' => 'seven',
+  );
+  theme_enable($enable);
+
+  foreach ($enable as $var => $theme) {
+    if (!is_numeric($var)) {
+      variable_set($var, $theme);
+    }
+  }
 }
 
 /**
  * Submit function for the form hook
  */
-function ldpm_tfa_set_json_endpoint_form_submit(&$form, &$form_state)
-{
+function ldpm_tfa_set_json_endpoint_form_submit(&$form, &$form_state) {
   variable_set('programs_json_endpoint', $form_state['values']['endpoint']);
 }
